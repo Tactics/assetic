@@ -54,8 +54,16 @@ class HttpAsset extends BaseAsset
 
     public function load(FilterInterface $additionalFilter = null)
     {
-        $streamContext = StreamContextFactory::getContext($this->sourceUrl);
-        
+        $streamContext = StreamContextFactory::getContext(
+            $this->sourceUrl,
+            false,
+            array(
+                'http' => array(
+                    'proxy' => "euproxy.eu.kellogg.com:8080",
+                )
+            )
+        );
+
         $content = @file_get_contents(
             VarUtils::resolve($this->sourceUrl, $this->getVars(), $this->getValues()),
             false,
@@ -71,8 +79,14 @@ class HttpAsset extends BaseAsset
 
     public function getLastModified()
     {
-        $streamContext = StreamContextFactory::getContext($this->sourceUrl, false, array('http' => array('method' => 'HEAD')));
-        
+        $streamContext = StreamContextFactory::getContext(
+            $this->sourceUrl,
+            false,
+            array(
+                'http' => array('method' => 'HEAD'),
+                'proxy' => "euproxy.eu.kellogg.com:8080",
+            ));
+
         if (false !== @file_get_contents($this->sourceUrl, false, $streamContext)) {
             foreach ($http_response_header as $header) {
                 if (0 === stripos($header, 'Last-Modified: ')) {
