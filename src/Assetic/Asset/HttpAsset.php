@@ -13,6 +13,7 @@ namespace Assetic\Asset;
 
 use Assetic\Filter\FilterInterface;
 use Assetic\Util\VarUtils;
+use Assetic\Util\StreamContextFactory;
 
 /**
  * Represents an asset loaded via an HTTP request.
@@ -53,8 +54,12 @@ class HttpAsset extends BaseAsset
 
     public function load(FilterInterface $additionalFilter = null)
     {
+        $streamContext = StreamContextFactory::getContext($this->sourceUrl);
+        
         $content = @file_get_contents(
-            VarUtils::resolve($this->sourceUrl, $this->getVars(), $this->getValues())
+            VarUtils::resolve($this->sourceUrl, $this->getVars(), $this->getValues()),
+            false,
+            $streamContext
         );
 
         if (false === $content && !$this->ignoreErrors) {
@@ -66,7 +71,9 @@ class HttpAsset extends BaseAsset
 
     public function getLastModified()
     {
-        if (false !== @file_get_contents($this->sourceUrl, false, stream_context_create(array('http' => array('method' => 'HEAD'))))) {
+        $streamContext = StreamContextFactory::getContext($this->sourceUrl, false, array('http' => array('method' => 'HEAD')));
+        
+        if (false !== @file_get_contents($this->sourceUrl, false, $streamContext)) {
             foreach ($http_response_header as $header) {
                 if (0 === stripos($header, 'Last-Modified: ')) {
                     list(, $mtime) = explode(':', $header, 2);
